@@ -18,7 +18,7 @@ module ONIX
   # Usage:
   #
   #   ONIX::Normaliser.process("oldfile.xml", "newfile.xml")
-  #   
+  #
   # Dependencies:
   #
   # At this stage the class depends on several external apps, all commonly available
@@ -31,17 +31,18 @@ module ONIX
       # normalise oldfile and save it as newfile. oldfile
       # will be left untouched
       #
-      def process(oldfile, newfile)
-        self.new(oldfile, newfile).run
+      def process(oldfile, newfile, options=nil)
+        self.new(oldfile, newfile, options).run
       end
     end
 
-    def initialize(oldfile, newfile)
+    def initialize(oldfile, newfile, options=nil)
       raise ArgumentError, "#{oldfile} does not exist" unless File.file?(oldfile)
       raise ArgumentError, "#{newfile} already exists" if File.file?(newfile)
       raise "xsltproc app not found" unless app_available?("xsltproc")
       raise "tr app not found"       unless app_available?("tr")
 
+      @options = options.nil? ? {} : options.stringify_keys
       @oldfile = oldfile
       @newfile = newfile
       @curfile = next_tempfile
@@ -94,7 +95,12 @@ module ONIX
       inpath = File.expand_path(src)
       outpath = File.expand_path(dest)
       xsltpath = File.dirname(__FILE__) + "/../../support/switch-onix-2.1-short-to-reference.xsl"
-      `xsltproc -o #{outpath} #{xsltpath} #{inpath}`
+
+      env_vars = {}
+      unless @options['xml_catalog_files'].nil?
+        env_vars['XML_CATALOG_FILES'] = Array(@options['xml_catalog_files']).join(File::PATH_SEPARATOR)
+      end
+      system(env_vars, "xsltproc -o #{outpath} #{xsltpath} #{inpath}")
     end
 
     # XML files shouldn't contain low ASCII control chars. Strip them.
