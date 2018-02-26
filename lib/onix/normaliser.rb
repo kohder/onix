@@ -55,15 +55,18 @@ module ONIX
       if @head.include?("ONIXmessage")
         dest = next_tempfile
         to_reference_tags(@curfile, dest)
+        FileUtils.rm_rf(@curfile)
         @curfile = dest
       end
 
       # remove control chars
       dest = next_tempfile
       remove_control_chars(@curfile, dest)
+      FileUtils.rm_rf(@curfile)
       @curfile = dest
 
       FileUtils.cp(@curfile, @newfile)
+      FileUtils.rm_rf(@curfile)
     end
 
     #private
